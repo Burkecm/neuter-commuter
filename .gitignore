@@ -1,0 +1,6 @@
+Output/
+*.pdf
+!Voucher_BLANK_TAC_2023_Sample.pdf
+*.docx
+*.zip
+*.txt
