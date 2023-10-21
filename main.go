@@ -41,13 +41,18 @@ type Owner struct{
 	Pet5 string `csv:"Pet5"`
 }
 func main() {
-	 bs, err := os.ReadFile("Sample_DataSimple.csv")
-	//bs, err := os.ReadFile(os.Args[1])
-	//startID := strings.TrimSuffix(os.Args[1], ".csv")
-	startID := 1
+	bs, err := os.ReadFile("SampleData/Sample_DataSimple.csv")
 	if err != nil {
 		fmt.Println("Error: ", err)
 		os.Exit(1)
+	}
+	var startID []byte
+	fmt.Println("Please enter the starting Invoice ID")
+	fmt.Scan(&startID)
+	ID, err := strconv.Atoi(string(startID[1:])) 
+		if err != nil {
+		fmt.Println("Error: Invalid ID format. Expected exactly 1 letter followed by a number.")
+		os.Exit(2)
 	}
 	r := csv.NewReader(bytes.NewReader(bs))
 	r.Comment = '/'
@@ -59,8 +64,8 @@ func main() {
 	}
 	for _, owner := range owners{
 		//fmt.Println(owner)
-		GenerateInvoice(*owner, startID)
-		startID++
+		GenerateInvoice(*owner, ID)
+		ID++
 	}
 }
 
@@ -72,6 +77,7 @@ func GenerateInvoice(o Owner, DocID int) error{
 	tpl1 := gofpdi.ImportPage(pdf, "Voucher_BLANK_TAC_2023_Sample.pdf", 1, "/MediaBox")
 	pdf.AddPage()
 	
+
 	// Draw imported template onto page
 	gofpdi.UseImportedTemplate(pdf, tpl1, 0, 5, 210, 0)
 
@@ -79,7 +85,7 @@ func GenerateInvoice(o Owner, DocID int) error{
  	pdf.SetFont("Helvetica", "", 20)
 	pdf.Cell(0, 0,o.Name)
 
-	err := pdf.OutputFileAndClose("Output/Voucher_"+strconv.Itoa(DocID)+".pdf")
+	err := pdf.OutputFileAndClose("Output/Voucher_"+strconv.Itoa(DocID)+".pdf") //strconv.Itoa()
 	if err != nil {
 		panic(err)
 	}
