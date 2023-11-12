@@ -42,23 +42,28 @@ type Owner struct{
 	Pet5 string `csv:"Pet5"`
 }
 func main() {
-	bs, err := os.ReadFile("SampleData/Sample_DataSimple.csv")
-	if err != nil {
-		fmt.Println("Error: ", err)
-		os.Exit(1)
-	}
-	// Allow user to input starting ID number. Expected format defined by owner
+	// allow user to input starting ID number. Expected format defined by owner
 	var startID []byte
 	fmt.Println("Please enter the starting Invoice ID")
 	fmt.Scan(&startID)
 	matched, err := regexp.Match(`[A-Z][0-9]*`, startID)
 	if !matched || err != nil{
 		fmt.Println("Error: Invalid ID format. Expected exactly 1 capital letter followed by a number.")
-		os.Exit(2)
+		os.Exit(1)
 	}
+
 	// split prefix letter form ID number
 	prefix := string(startID[0])
 	ID, _ := strconv.Atoi(string(startID[1:])) 
+
+	// load input csv into memory
+	bs, err := os.ReadFile(".//Input/Invoice_Input.csv")
+	if err != nil {
+		fmt.Println("Error: ", err)
+		os.Exit(2)
+	}
+	// check for voucher ID to avoid overwriting
+	// TODO
 
 	// Parse and unmarshal CSV to Owner struct
 	r := csv.NewReader(bytes.NewReader(bs)) 
@@ -81,11 +86,10 @@ func main() {
 }
 
 func generateInvoice(o Owner, prefix string, DocID int) error{
-	
 	// generate a new document
 	pdf := gofpdf.New("P", "mm", "A4", "")
 	// Import Invoice pdf with gofpdi free pdf document importer
-	tpl1 := gofpdi.ImportPage(pdf, "BLANK_Voucher_Current.pdf", 1, "/MediaBox")
+	tpl1 := gofpdi.ImportPage(pdf, ".//Input/BLANK_Voucher_Current.pdf", 1, "/MediaBox")
 	pdf.AddPage()
 	
 	// Draw imported template onto page
@@ -103,7 +107,12 @@ func generateInvoice(o Owner, prefix string, DocID int) error{
 	o.fillCustomerData(pdf, 25, 100)
 
 	// Saves voucher as PDF
-	err := pdf.OutputFileAndClose("Output/Voucher_"+prefix+strconv.Itoa(DocID)+".pdf")
+	err := os.MkdirAll("Output/", 0750) 
+	if err != nil{
+		fmt.Println("Error: Unable to create Output folder.", err)
+		os.Exit(3)
+	}
+	err = pdf.OutputFileAndClose("Output/"+prefix+strconv.Itoa(DocID)+".pdf")
 	if err != nil {
 		panic(err)
 	}
